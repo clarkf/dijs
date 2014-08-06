@@ -17,13 +17,10 @@ di.bind('config', function (app, done) {
     });
 });
 
-di.bind('database', function (app, done) {
-    di.get('config', function (err, config) {
-        if (err) return done(err);
-
-        DBManager.connect(config, function (err, connection) {
-            done(err, connection);
-        });
+// Bind 'database' in the container, depending on 'config'
+di.bind('database', ['config'], function (app, done) {
+    DBManager.connect(config, function (err, connection) {
+        done(err, connection);
     });
 });
 
@@ -48,18 +45,14 @@ exports.index = function (di, req, res, next) {
 ```javascript
 var di = new Dijs();
 
-di.bind('session.token', function (app, done) {
-    app.get('user', function (err, user) {
-        if (err) return done(err);
+di.bind('session.token', ['user'], function (app, done) {
+    var data = {
+        username: user.username,
+        password: user.password
+    };
 
-        var data = {
-            username: user.username,
-            password: user.password
-        };
-
-        jQuery.post('/api/sessions/new', data, function (response) {
-            return done(null, response.token);
-        });
+    jQuery.post('/api/sessions/new', data, function (response) {
+        return done(null, response.token);
     });
 });
 
@@ -84,7 +77,7 @@ jQuery('#login-form').on('submit', function () {
 
 Constructor method.  Declares a new dijs container.
 
-### `di.bind(key, factory, shared=false)`
+### `di.bind(key, [dependencies], factory, shared=false)`
 
 Bind a new value into the container.  This value will be accessible with
 the passed key after this point.  The `factory` function will not be
@@ -96,11 +89,16 @@ subsequent `get` calls.  You can disable this, forcing the container to evaluate
 the factory upon each request by passing `false` after the factory
 function.
 
+If the factory that you're defining has dependencies, you can supply
+them when binding.  They will automatically be appended, in order, to
+the factory callback
+
 The signature of the `factory` callback is: `container, callback`, where
 container is the originating container, and a callback accepting an
 optional `error` and the instantiated value:
 
 ```javascript
+// Simple example
 di.bind('fooer', function (container, done) {
     var fooer = new Fooer();
 
@@ -109,6 +107,22 @@ di.bind('fooer', function (container, done) {
     }
 
     done(null, fooer);
+});
+```
+
+```javascript
+// Dependencies example
+di.bind('secret_value', function (container, done) {
+    // Do something super complex here
+    done(null, 'shhh! secrets');
+});
+
+di.bind('bazzer', ['secret_value'], function (container, done, secret) {
+    var bazzer = new Bazzer(secret);
+
+    bazzer.on('connected', function () {
+        done(null, bazzer);
+    });
 });
 ```
 
