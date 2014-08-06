@@ -15,6 +15,13 @@ describe("dijs", function () {
         });
     });
 
+    it('should pass a callback as the second parameter to bind callback', function () {
+        container.bind('foo', function (passed, done) {
+            assert.typeOf('function', done);
+            done();
+        });
+    });
+
     it('should share results by default', function () {
         container.bind('foo', function (container, done) {
             done(null, Math.random());
@@ -24,6 +31,35 @@ describe("dijs", function () {
             container.get('foo', function (err, two) {
                 assert.strictEqual(one, two);
             });
+        });
+    });
+
+    it('should allow getting dependencies while binding', function (done) {
+        container.bind('foo', function (container, cb) {
+            cb(null, 'foo');
+        });
+
+        container.bind('bar', ['foo'], function (container, cb, foo) {
+            assert.equal('foo', foo);
+            done();
+        });
+
+        container.get('bar', function () {});
+    });
+
+    it('should report errors during dependency resolution', function (done) {
+        container.bind('erroring', function (container, cb) {
+            cb(new Error("computer on fire"));
+        });
+
+        container.bind('bar', ['erroring'], function (container, cb, erroringval) {
+            // this should never be reached
+            cb(null, 'bar');
+        });
+
+        container.get('bar', function (err) {
+            assert.instanceOf(err, Error);
+            done();
         });
     });
 

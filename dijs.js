@@ -9,6 +9,7 @@
         this.shared = {};
         this.items = {};
         this.values = {};
+        this.getvals = {};
     }
 
     /**
@@ -29,9 +30,16 @@
      * @param {boolean} [shared=true]
      * @api public
      */
-    Container.prototype.bind = function (key, value, shared) {
+    Container.prototype.bind = function (key, getvals, value, shared) {
+        if (typeof getvals == 'function') {
+            shared = value;
+            value = getvals;
+            getvals = [];
+        }
+
         this.items[key] = value;
         this.shared[key] = shared !== false;
+        this.getvals[key] = getvals;
     };
 
     /**
@@ -50,6 +58,10 @@
             values = [],
             errored = false,
             self = this;
+
+        if (keys.length === 0) {
+            return done(null);
+        }
 
         // Iterate over each listed key
         keys.forEach(function (key, i) {
@@ -88,7 +100,9 @@
      * @param {Function} callback
      */
     Container.prototype.getOne = function (key, callback) {
-        var self = this;
+        var self = this,
+            getvals = this.getvals[key],
+            factory = this.items[key];
 
         // Check to see if this result was intended to be reused, and if it's been
         // built before.  If it has, simply return the stored value.
@@ -96,21 +110,34 @@
             return callback(null, this.values[key]);
         }
 
-        // Call the factory function, passing the container and a callback
-        this.items[key](this, function (err, value) {
-            // Errors should take precedence.
+        // Get the prerequisite dependencies
+        this.get(getvals, function (err) {
+            // Check for errors while resolving dependencies
             if (err) {
                 return callback(err);
             }
 
-            // If this result was intended to be shared across calls, store it for
-            // later.
-            if (self.shared[key]) {
-                self.values[key] = value;
-            }
+            var vals = Array.prototype.slice.call(arguments, 1),
+                itemback;
 
-            // Return the result to the user.
-            callback(err, value);
+            itemback = function (err, value) {
+                // Errors should take precedence.
+                if (err) {
+                    return callback(err);
+                }
+
+                // If this result was intended to be shared across calls, store it for
+                // later.
+                if (self.shared[key]) {
+                    self.values[key] = value;
+                }
+
+                // Return the result to the user.
+                callback(err, value);
+            };
+
+            // Call the factory function, passing the container and a callback
+            factory.apply(null, [self, itemback].concat(vals));
         });
     };
 }).call(this);
