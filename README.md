@@ -1,4 +1,8 @@
 # dijs
+
+[![Coverage Status](https://img.shields.io/coveralls/clarkf/dijs.svg?style=flat)](https://coveralls.io/r/clarkf/dijs)
+[![Build Status](http://img.shields.io/travis/joyent/node.svg?style=flat)](https://travis-ci.org/clarkf/dijs)
+
 A flyweight dependency injection container for Node.js and the browser.
 
 ## A Contrived Node.js Example
