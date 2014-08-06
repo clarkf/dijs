@@ -104,6 +104,11 @@
             getvals = this.getvals[key],
             factory = this.items[key];
 
+        // Check to see if the key is even bound
+        if (!this.items.hasOwnProperty(key)) {
+            return callback(new Error());
+        }
+
         // Check to see if this result was intended to be reused, and if it's been
         // built before.  If it has, simply return the stored value.
         if (this.shared[key] && this.values[key]) {

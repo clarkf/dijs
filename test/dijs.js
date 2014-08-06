@@ -75,6 +75,14 @@ describe("dijs", function () {
         });
     });
 
+    it('should throw an Error when an unbound get is called', function (done) {
+        container.get('something_not_defined', function (err) {
+            assert.equal(1, arguments.length);
+            assert.instanceOf(err, Error);
+            done();
+        });
+    });
+
     describe('synchronous', function () {
         beforeEach(function () {
             container.bind('foo', function (app, done) {
