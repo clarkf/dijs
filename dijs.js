@@ -17,6 +17,7 @@
     if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
         module.exports = Container;
     } else {
+        /* istanbul ignore next */
         window.Dijs = Container;
     }
 
