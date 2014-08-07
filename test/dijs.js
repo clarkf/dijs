@@ -83,6 +83,14 @@ describe("dijs", function () {
         });
     });
 
+    it('should allow for binding of simple objects', function (done) {
+        container.bind('foo', 'foo');
+        container.get('foo', function (err, foo) {
+            assert.equal('foo', foo);
+            done();
+        });
+    });
+
     describe('synchronous', function () {
         beforeEach(function () {
             container.bind('foo', function (app, done) {

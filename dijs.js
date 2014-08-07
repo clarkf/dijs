@@ -31,10 +31,15 @@
      * @api public
      */
     Container.prototype.bind = function (key, getvals, value, shared) {
-        if (typeof getvals == 'function') {
+        if (!Array.isArray(getvals)) {
             shared = value;
             value = getvals;
             getvals = [];
+        }
+
+        if (typeof value != 'function') {
+            shared = true;
+            this.values[key] = value;
         }
 
         this.items[key] = value;
